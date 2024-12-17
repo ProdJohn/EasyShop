@@ -1,5 +1,6 @@
 package org.yearup.data.mysql;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.yearup.data.CategoryDao;
 import org.yearup.models.Category;
@@ -12,6 +13,7 @@ import java.util.List;
 @Component
 public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao
 {
+    @Autowired
     public MySqlCategoryDao(DataSource dataSource)
     {
         super(dataSource);
@@ -23,15 +25,18 @@ public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao
         // get all categories
         List<Category> categories = new ArrayList<>();
         String sql = "SELECT * FROM categories";
-        try (Connection connection = getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                categories.add(mapRow(resultSet));
+        try (Connection connection = this.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    Category category = mapRow(resultSet);
+                    categories.add(category);
+                }
             }
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
-
         }
         return categories;
     }
@@ -51,8 +56,9 @@ public class MySqlCategoryDao extends MySqlDaoBase implements CategoryDao
                     return mapRow(resultSet);
                 }
             }
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
         return null;
     }
